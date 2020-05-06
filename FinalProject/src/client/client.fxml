@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.Text?>
+
+
+<Pane fx:controller="client.ClientController" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1">
+   <children>
+      <ComboBox fx:id="items" layoutX="130.0" layoutY="95.0" onAction="#itemChosen" prefHeight="46.0" prefWidth="328.0" promptText="Items" />
+      <Text layoutX="110.0" layoutY="43.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Welcome to the Auction!">
+         <font>
+            <Font name="Lucida Handwriting Italic" size="28.0" />
+         </font>
+      </Text>
+      <TextField fx:id="bid" layoutX="149.0" layoutY="216.0" promptText="Enter Bid" />
+      <Button fx:id="money" layoutX="375.0" layoutY="216.0" mnemonicParsing="false" onAction="#placed" text="Enter" />
+   </children>
+</Pane>
