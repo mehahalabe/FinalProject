@@ -26,6 +26,7 @@ public class ClientController {
 
     private String itemChosen="";
     private double bidMoney=0;
+    public boolean flag=false;
     @FXML
     void itemChosen(ActionEvent event) {
     	//has the item that they are bidding on
@@ -41,11 +42,22 @@ public class ClientController {
     void placed(ActionEvent event) {
     	//amount of money they placed on the item
     	bidMoney = Double.parseDouble(bid.getText());
+    	bid.clear();
+    	flag = true;
     	
+    }
+    public boolean getFlag()
+    {
+    	return flag;
     }
     public double getBid()
     {
     	return bidMoney;
+    	
+    }
+    public void setBid(double b)
+    {
+    	bidMoney = b;
     }
     
     void setNames(ArrayList<String> n)
@@ -56,6 +68,10 @@ public class ClientController {
     		items.getItems().add(names.get(i));
     	}
     	
+    }
+    int getSize()
+    {
+    	return items.getItems().size();
     }
     
     void setText(String input)

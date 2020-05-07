@@ -41,8 +41,8 @@ public class Client extends Application {
 
     ClientController controller;
     private static String host = "127.0.0.1";
-    private ObjectInputStream fromServer;
-    private ObjectOutputStream toServer;
+    private BufferedReader fromServer;
+    private PrintWriter toServer;
     private Scanner consoleInput = new Scanner(System.in);
     private ArrayList<String> itemNames = new ArrayList<String>();
     private int clientID;
@@ -76,31 +76,33 @@ public class Client extends Application {
 		try {
 			socket = new Socket(host, 5000);
 			 System.out.println("Connecting to... " + socket);
-		        fromServer = new ObjectInputStream(socket.getInputStream());//BufferedReader(new InputStreamReader(socket.getInputStream()));
-		        System.out.println("yikes");
-		        toServer = new ObjectOutputStream(socket.getOutputStream());//PrintWriter(socket.getOutputStream());
-		        System.out.println("here");
+			 	toServer = new PrintWriter(socket.getOutputStream());
+			 	fromServer = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+			 	
+		       
 		        Thread readerThread = new Thread(new Runnable() {
 		          @Override
 		          public void run() {
-		            Object input;
+		            String input;
 		            try {
-		              while ((input = fromServer.readObject()) != null) {
+		            	
+		              while ((input = fromServer.readLine()) != null) {
+		            	  
 		                System.out.println("From server: " + input);
-		                if(input instanceof String) {
-		                	input = input.toString();
+		              
 		                String[] variables = ((String) input).split(",");
-			              if(variables[0].equals("items"))
+			              if(variables.length-6!=controller.getSize())
 			              {
-			            	  for(int i =1; i< variables.length-2; i++)
+			            	  for(int i =2; i< variables.length-2; i++)
 			            	  {
 			            		  itemNames.add(variables[i]);
 			            		  
 			            	  }
 			            	  clientID = Integer.parseInt(variables[variables.length-1]);
-			            	  processRequest("items");
-			              }}
-		                else
+			            	  ClientController temp = getController();
+			  	    			temp.setNames(itemNames);			         
+			  	    		}
+		                
 			              processRequest(input);
 		              }
 		            } catch (Exception e) {
@@ -112,20 +114,31 @@ public class Client extends Application {
 		        Thread writerThread = new Thread(new Runnable() {
 		          @Override
 		          public void run() {
+		        	 
+		        
+		        	 boolean flag = true;
+		        	  System.out.println("whatshapp");
 		            while (true) {
+		            	if(count ==0)
+		            	{
+		            		sendToServer("start");
+		            		count++;
+		            	}
+		            	
+		            	//while(!controller.getFlag()) {       		}
 		            	String input = controller.getItem();
 		            	double bid = controller.getBid();
-		            	System.out.println("help im stuck");
-		            	while(input.equals("")&& bid == 0.0) {input = controller.getItem(); bid = controller.getBid();}
-		            	System.out.println("help im stuck");
 		            	//Bid and Input are now recieved to be sent to server
-		            	
 		            	String concat = input + "," + Double.toString(bid) + "," + clientID;
 		            	
 		             // String input = consoleInput.nextLine();
 		              
 		              //what do u want to send to server here
-		              sendToServer(concat);
+		            	if(bid !=0) {
+		            		controller.setBid(0);
+		            		sendToServer(concat);
+		              }
+		              flag = false;
 		             /*
 		              Message request = new Message(variables[0], variables[1], Integer.valueOf(variables[2]));
 		              GsonBuilder builder = new GsonBuilder();
@@ -137,44 +150,38 @@ public class Client extends Application {
 
 		        readerThread.start();
 		        writerThread.start();
+		     
 		} catch (IOException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
 
     }
-    protected void processRequest(Object input) {
-    	if(input instanceof String) {
-	    	if(input.equals("items"))
-	    	{
-	    		ClientController temp = getController();
-	    		temp.setNames(itemNames);
-	    	}
-	    	else {
-	    	 String[] variables = ((String) input).split(",");
-	    	 //clientID = Integer.parseInt(variables[variables.length-1]);
+    protected void processRequest(String input) {
+    	String[] variables = ((String) input).split(",");
+	    if(!variables[1].equals("items")) {
+	    	
+	    	 clientID = Integer.parseInt(variables[variables.length-1]);
 	    	 if(variables[0].contentEquals("invalid"))
 	    	 {
 	    		 controller.setText(variables[1]);
 	    	 }
+	    	 else
+	    	 {
+	    		 String out = variables[2] + " is the highest bidder with a bid of " + variables[1] +" on "+ variables[3];
+	    		 controller.setText(out);
+	    	 }
+	    	
 	    	}
+    		
+    		
     	}
-    	else if(input instanceof Item)
-    	{
-    		String out = ((Item) input).getHighestName() + " is the highest bidder with a bid of " + ((Item) input).getHighestBid();
-    		controller.setText(out);
-    	}
-      }
+      
 
       protected void sendToServer(String string) {
         System.out.println("Sending to server: " + string);
-        try {
-			toServer.writeObject(string);
-			toServer.flush();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+        toServer.println(string);
+		toServer.flush();
         
       }
 

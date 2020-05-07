@@ -31,6 +31,7 @@ public class Server extends Observable {
     private ArrayList<Item> items= new ArrayList<Item>();
     private String itemList="items,";
     private int clientId =0;
+    private int count =0;
     public static void main (String [] args) {
         server = new Server();
         server.populateItems();
@@ -76,11 +77,11 @@ public class Server extends Observable {
 		      clientId++;
 		     
 
-		      Thread t = new Thread(handler);
-		      t.start();
+		     Thread t = new Thread(handler);
+		     t.start();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//e.printStackTrace();
 		}
 	     
 	    }
@@ -109,9 +110,9 @@ public class Server extends Observable {
 		      }
 		      System.out.println(output);*/
 		   //  if(!output.equals("ITEMS")) {
-		  Object output = null;
+		  String output = "";
 		  String[] variables = input.split(",");
-		  if(!variables[0].equals("items")) {
+		 // if(!variables[0].equals("items")) {
 			  for(int i = 0; i<items.size(); i++)
 			  {
 				  if(variables[0].equals(items.get(i).getName()))
@@ -121,18 +122,22 @@ public class Server extends Observable {
 						  //set customer name and bid
 						  items.get(i).setHighestName(Integer.parseInt(variables[2]));
 						  items.get(i).setHighestBid(Double.parseDouble(variables[1]));
-						  //output = "valid," + Double.parseDouble(variables[1]);
-						  output = items.get(i);
+						  output = "valid," + variables[1] + "," + variables[2]+","+variables[0];
+						 
 						  //valid bid
 					  }
 					  else
 					  {
 						  //invalid bid
-						  output = "invalid,Bid is too low";
+						  output = "invalid,Bid is too low," + variables[1];
 					  }
 				  }
 			  }
-		  }
+		//  }
+		 // else 
+		//  {
+			output += ","+ itemList; 
+		//  }
 		  
 		  this.setChanged();
 		  this.notifyObservers(output);//}
@@ -148,56 +153,48 @@ public class Server extends Observable {
     class ClientHandler implements Runnable, Observer {
     	private Server server;
     	  private Socket clientSocket;
-    	  private ObjectInputStream fromClient;
-    	  private ObjectOutputStream toClient;
-    	  private int count =0;
+    	  private BufferedReader fromClient;
+    	  private PrintWriter toClient;
+    	  
 
     	  protected ClientHandler(Server server, Socket clientSocket) {
     	    this.server = server;
     	    this.clientSocket = clientSocket;
     	    try {
-    	    	System.out.println("yikes");
-    	      fromClient = new ObjectInputStream(this.clientSocket.getInputStream());//BufferedReader(new InputStreamReader(this.clientSocket.getInputStream()));
-    	      toClient = new ObjectOutputStream(this.clientSocket.getOutputStream());//PrintWriter(this.clientSocket.getOutputStream());
-    	      System.out.println("yikes");
+      	      fromClient = new BufferedReader(new InputStreamReader(this.clientSocket.getInputStream()));
+    	    	toClient = new PrintWriter(this.clientSocket.getOutputStream());
+    	      
     	    } catch (IOException e) {
-    	      e.printStackTrace();
+    	    //  e.printStackTrace();
     	    }
     	  }
 
     	  protected void sendToClient(String string) {
-    		//string += "," + clientId;
+    		string += "," + clientId;
     	    System.out.println("Sending to client: " + string);
-    	    try {
-				toClient.writeObject(string);
-	    	    toClient.flush();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+    	    toClient.println(string);
+			toClient.flush();
     	  }
 
     	  @Override
     	  public void run() {
-    	    Object input;
+    	    String input;
     	    try {
-    	    	if(count ==0) {
+    	    	System.out.println(count);
+    	    	/*if(items.size()>0) {
     	    	 server.processRequest(itemList);  
-    	    	 System.out.println("here hoe");
+    	    	
     	    	 count++;
     	    	}
-    	    	else {
-	    	      try {
-					while ((input = fromClient.readObject()) != null) {
-						  System.out.println("From client: " + input.toString());
-						  String test = server.processRequest(input.toString());
-						
-					  }
-				} catch (ClassNotFoundException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-    	    	}
+    	    	else {*/
+    	    		System.out.println("inside else");
+	    	      while ((input = fromClient.readLine()) != null) {
+					  System.out.println("From client: " + input.toString());
+					  String test = server.processRequest(input.toString());
+					
+				  }
+				
+    	    	//}
     	    } catch (IOException e) {
     	      e.printStackTrace();
     	    }
