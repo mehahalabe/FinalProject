@@ -1,4 +1,4 @@
-package server;
+package client;
 
 public class Item {
 	private String name;

@@ -5,6 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -27,12 +28,14 @@ public class Server extends Observable {
 
     static Server server;
     private ArrayList<PrintWriter> clientOutputStreams;
-    private ArrayList<Item> items;
-
+    private ArrayList<Item> items= new ArrayList<Item>();
+    private String itemList="items,";
+    private int clientId =0;
     public static void main (String [] args) {
         server = new Server();
         server.populateItems();
-        server.SetupNetworking();
+         
+       /* new Thread( () -> {*/server.SetupNetworking();//}).start();
         
     }
 
@@ -44,6 +47,8 @@ public class Server extends Observable {
     	      while (myReader.hasNextLine()) {
 	    	       String data = myReader.nextLine();
 	    	       int price = (int) Math.floor(Math.random() * 100); 
+	    	       
+	    	       itemList += data +",";
 	    	       Item x = new Item(data, 0, -1, price);
 	    	       items.add(x);
     	      }
@@ -56,85 +61,152 @@ public class Server extends Observable {
 	}
 
 	private void SetupNetworking() {
-        int port = 4442;
-        System.out.println("reaching here");
-        try {
-            ServerSocket ss = new ServerSocket(port);
-            ss.setSoTimeout(100000);
-            System.out.println("ur error");
-            while (true) {
-            	
-                Socket clientSocket = ss.accept();
-                System.out.println("up and running");
-                System.out.println("Just connected to " + clientSocket.getRemoteSocketAddress());
-                ClientObserver writer = new ClientObserver(clientSocket.getOutputStream());
-                writer.write("Thank you for connecting!");
-                Thread t = new Thread(new ClientHandler(clientSocket, writer));
-                t.start();
-                this.addObserver(writer);
-                System.out.println("got a connection");
-                //clientSocket.close();
-                
-            }
-        } catch (IOException e) {e.printStackTrace(); System.out.println("cry");}
+		@SuppressWarnings("resource")
+		ServerSocket serverSock;
+	    while (true) {
+	    	Socket clientSocket;
+		try {
+			serverSock = new ServerSocket(5000);
+			clientSocket = serverSock.accept();
+			 System.out.println("Connecting to... " + clientSocket);
+			 
+
+		      ClientHandler handler = new ClientHandler(this, clientSocket);
+		      server.addObserver(handler);
+		      clientId++;
+		     
+
+		      Thread t = new Thread(handler);
+		      t.start();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	     
+	    }
     }
+	  protected String processRequest(String input) {
+		  /*  String output = "Error";
+		    Gson gson = new Gson();
+		    Message message = gson.fromJson(input, Message.class);
+		    try {
+		      String temp = "";
+		      switch (message.type) {
+		        case "upper":
+		          temp = message.input.toUpperCase();
+		          break;
+		        case "lower":
+		          temp = message.input.toLowerCase();
+		          break;
+		        case "strip":
+		          temp = message.input.replace(" ", "");
+		          break;
+		      }
+		      output = "";
+		      for (int i = 0; i < message.number; i++) {
+		        output += temp;
+		        output += " ";
+		      }
+		      System.out.println(output);*/
+		   //  if(!output.equals("ITEMS")) {
+		  Object output = null;
+		  String[] variables = input.split(",");
+		  if(!variables[0].equals("items")) {
+			  for(int i = 0; i<items.size(); i++)
+			  {
+				  if(variables[0].equals(items.get(i).getName()))
+				  {
+					  if(Double.parseDouble(variables[1]) > items.get(i).getHighestBid()) 
+					  {
+						  //set customer name and bid
+						  items.get(i).setHighestName(Integer.parseInt(variables[2]));
+						  items.get(i).setHighestBid(Double.parseDouble(variables[1]));
+						  //output = "valid," + Double.parseDouble(variables[1]);
+						  output = items.get(i);
+						  //valid bid
+					  }
+					  else
+					  {
+						  //invalid bid
+						  output = "invalid,Bid is too low";
+					  }
+				  }
+			  }
+		  }
+		  
+		  this.setChanged();
+		  this.notifyObservers(output);//}
+		     //return output;
+		 /*  } catch (Exception e) {
+		      e.printStackTrace();
+		    }
+		    return output;*/
+		      return input;
+		  }
 
 	
-    class ClientHandler implements Runnable {
-        private  BufferedReader reader;
-        private  ClientObserver writer; // See Canvas. Extends ObjectOutputStream, implements Observer
-        Socket clientSocket;
+    class ClientHandler implements Runnable, Observer {
+    	private Server server;
+    	  private Socket clientSocket;
+    	  private ObjectInputStream fromClient;
+    	  private ObjectOutputStream toClient;
+    	  private int count =0;
 
-        public ClientHandler(Socket clientSocket, ClientObserver writer) throws IOException{
-        	Socket sock = clientSocket;
-        	this.writer = writer;
-			reader = new BufferedReader(new InputStreamReader(sock.getInputStream()));
-			System.out.println("reaching client handler");
-			//System.out.println(reader.read());
-        }
+    	  protected ClientHandler(Server server, Socket clientSocket) {
+    	    this.server = server;
+    	    this.clientSocket = clientSocket;
+    	    try {
+    	    	System.out.println("yikes");
+    	      fromClient = new ObjectInputStream(this.clientSocket.getInputStream());//BufferedReader(new InputStreamReader(this.clientSocket.getInputStream()));
+    	      toClient = new ObjectOutputStream(this.clientSocket.getOutputStream());//PrintWriter(this.clientSocket.getOutputStream());
+    	      System.out.println("yikes");
+    	    } catch (IOException e) {
+    	      e.printStackTrace();
+    	    }
+    	  }
+
+    	  protected void sendToClient(String string) {
+    		//string += "," + clientId;
+    	    System.out.println("Sending to client: " + string);
+    	    try {
+				toClient.writeObject(string);
+	    	    toClient.flush();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+    	  }
+
+    	  @Override
+    	  public void run() {
+    	    Object input;
+    	    try {
+    	    	if(count ==0) {
+    	    	 server.processRequest(itemList);  
+    	    	 System.out.println("here hoe");
+    	    	 count++;
+    	    	}
+    	    	else {
+	    	      try {
+					while ((input = fromClient.readObject()) != null) {
+						  System.out.println("From client: " + input.toString());
+						  String test = server.processRequest(input.toString());
+						
+					  }
+				} catch (ClassNotFoundException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+    	    	}
+    	    } catch (IOException e) {
+    	      e.printStackTrace();
+    	    }
+    	  }
+
+    	  @Override
+    	  public void update(Observable o, Object arg) {
+    	    this.sendToClient((String) arg);
+    	  }
         
-        
-        public void run() {
-        	String input;
-        	try {     
-        		while ((input = reader.readLine()) != null) 
-        		{
-        			System.out.println("From client: " + input);
-        			server.processRequest(input);   
-        			}    
-        		} catch (IOException e) {     
-        			e.printStackTrace();  
-        		}
-        }
-        
-    } // end of class ClientHandler
-    protected void processRequest(String input) {
-        String output = "Error";
-        Gson gson = new Gson();
-        Message message = gson.fromJson(input, Message.class);
-        try {
-          String temp = "";
-          switch (message.type) {
-            case "upper":
-              temp = message.input.toUpperCase();
-              break;
-            case "lower":
-              temp = message.input.toLowerCase();
-              break;
-            case "strip":
-              temp = message.input.replace(" ", "");
-              break;
-          }
-          output = "";
-          for (int i = 0; i < message.number; i++) {
-            output += temp;
-            output += " ";
-          }
-          this.setChanged();
-          this.notifyObservers(output);
-        } catch (Exception e) {
-          e.printStackTrace();
-        }
-      }
-        
+    }
 }
