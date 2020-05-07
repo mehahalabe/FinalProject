@@ -63,6 +63,7 @@ public class ClientController {
     void setNames(ArrayList<String> n)
     {
     	names = n;
+    	items.getItems().clear();
     	for(int i = 0; i<names.size(); i++)
     	{
     		items.getItems().add(names.get(i));
@@ -76,7 +77,8 @@ public class ClientController {
     
     void setText(String input)
     {
-    	action.setText(input);
+    	String set = "\n" + input;
+    	action.appendText(set);
     }
 
 }

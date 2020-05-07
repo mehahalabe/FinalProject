@@ -91,9 +91,15 @@ public class Client extends Application {
 		                System.out.println("From server: " + input);
 		              
 		                String[] variables = ((String) input).split(",");
-			              if(variables.length-6!=controller.getSize())
+			              if(variables.length-7!=controller.getSize())
 			              {
-			            	  for(int i =2; i< variables.length-2; i++)
+			            	  int j =0;
+			            	  while(!variables[j].equals("items"))
+			            	  {
+			            		  j++;
+			            	  }
+			            	  itemNames = new ArrayList<String>();
+			            	  for(int i =j+1; i< variables.length-2; i++)
 			            	  {
 			            		  itemNames.add(variables[i]);
 			            		  
@@ -117,7 +123,6 @@ public class Client extends Application {
 		        	 
 		        
 		        	 boolean flag = true;
-		        	  System.out.println("whatshapp");
 		            while (true) {
 		            	if(count ==0)
 		            	{
@@ -162,9 +167,15 @@ public class Client extends Application {
 	    if(!variables[1].equals("items")) {
 	    	
 	    	 clientID = Integer.parseInt(variables[variables.length-1]);
-	    	 if(variables[0].contentEquals("invalid"))
+	    	 if(variables[0].equals("invalid"))
 	    	 {
-	    		 controller.setText(variables[1]);
+	    		 String out = variables[1] + " on " + variables[3]; 
+	    		 controller.setText(out);
+	    	 }
+	    	 else if(variables[0].equals("done"))
+	    	 {
+	    		 String out = variables[2] + " has won the bid with a bid of "+ variables[1] +" on "+ variables[3];
+	    		 controller.setText(out);
 	    	 }
 	    	 else
 	    	 {

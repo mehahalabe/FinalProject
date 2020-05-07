@@ -112,6 +112,7 @@ public class Server extends Observable {
 		   //  if(!output.equals("ITEMS")) {
 		  String output = "";
 		  String[] variables = input.split(",");
+		  boolean flag = false;
 		 // if(!variables[0].equals("items")) {
 			  for(int i = 0; i<items.size(); i++)
 			  {
@@ -123,19 +124,34 @@ public class Server extends Observable {
 						  items.get(i).setHighestName(Integer.parseInt(variables[2]));
 						  items.get(i).setHighestBid(Double.parseDouble(variables[1]));
 						  output = "valid," + variables[1] + "," + variables[2]+","+variables[0];
+						  System.out.println(items.get(i).getHighestPrice());
+						  if(items.get(i).getHighestBid()>=items.get(i).getHighestPrice())
+						  {
+							  items.remove(i);
+							  output = "done," + variables[1] + "," + variables[2]+","+variables[0];
+							  flag = true;
+						  }
+						  
 						 
 						  //valid bid
 					  }
 					  else
 					  {
 						  //invalid bid
-						  output = "invalid,Bid is too low," + variables[1];
+						  output = "invalid,Bid of " + variables[1] +" is too low," + variables[1] + "," +variables[0];
 					  }
 				  }
 			  }
 		//  }
 		 // else 
 		//  {
+			if(flag) {
+				itemList = "items,";
+				for(int i = 0; i< items.size(); i++)
+				{
+					itemList += items.get(i).getName() +",";
+				}
+			}
 			output += ","+ itemList; 
 		//  }
 		  
