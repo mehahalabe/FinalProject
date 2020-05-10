@@ -1,0 +1,5 @@
+Teapot,A cermaic porcelain teapot that comes with a set of cups
+Poetry Book,A book filled with poems by the greats such as William Shakespeare and Edgar Allen Poe
+Broach,A golden broach with butterflies and semi-precious stones
+Earrings,A pair of pearl earrings from Opal
+Lamp,A Tiffany lamp from the 21st century
